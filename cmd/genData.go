@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 Rudolf Farkas @rudifa rudi.farkas@gmail.com
 */
 package cmd
 
@@ -19,9 +19,10 @@ import (
 
 // genDataCmd represents the genData command
 var genDataCmd = &cobra.Command{
-	Use:   "gen-data",
-	Short: "Generate test data",
-	Long:  `Generate test data`,
+	Use:     "gen-data",
+	Aliases: []string{"gen"},
+	Short:   "Generate test data",
+	Long:    `Generate test data`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("gen-data called")
 

@@ -1,0 +1,108 @@
+# exec cat data/schema.cue
+go mod tidy
+
+go run main.go -size=200
+# exec head data/data.json
+exec time cue eval data/schema.cue data/data.json -e '#dict' -f -o data.cue
+
+go run main.go -size=2000
+exec time cue eval data/schema.cue data/data.json -e '#dict' -f -o data.cue
+
+go run main.go -size=20000
+exec time cue eval data/schema.cue data/data.json -e '#dict' -f -o data.cue
+
+-- go.mod --
+module github.com/rudifa/cue-comprehension-test
+
+go 1.21.0
+
+-- main.go --
+package main
+
+import (
+	"fmt"
+    "os"
+    "flag"
+
+    "encoding/json"
+
+	"github.com/google/uuid"
+)
+
+func main() {
+
+    // Define a flag called "size" with a default value of 10 and a short description
+	sizePtr := flag.Int("size", 10, "Size of test data to generate")
+
+	// Parse the command-line arguments to set the value of the "size" flag
+	flag.Parse()
+
+	// Get the value of the "size" flag
+	size := *sizePtr
+
+    outfile := "data/data.json"
+
+    // Generate the data
+    err := genData(size, outfile)
+
+    if err != nil {
+        fmt.Printf("Error generating data: %v\n", err)
+    }
+
+}
+
+func genData(size int, outfile string) error {
+	// Create a slice to hold the generated items
+	items := make([]map[string]string, size)
+
+	// Generate UUID strings for each item
+	for i := 0; i < size; i++ {
+		id := uuid.New().String()
+		value := uuid.New().String()
+
+		// Create a map to hold the item data
+		item := map[string]string{
+			"id":    id,
+			"value": value,
+		}
+
+		// Add the item to the slice
+		items[i] = item
+	}
+
+	// Create a map to hold the top-level data
+	data := map[string]interface{}{
+		"items": items,
+	}
+
+	// Convert the data to JSON
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON data: %v", err)
+	}
+
+	// Write the JSON data to the output file
+	err = os.WriteFile(outfile, jsonData, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing JSON data to file: %v", err)
+	}
+
+	fmt.Printf("Generated test data of size %d and wrote it to file %s\n", size, outfile)
+	return nil
+}
+
+
+-- data/schema.cue --
+items: [
+	{
+		id:    string
+		value: string
+	},
+	...,
+]
+
+#dict: {
+	for item in items {
+		"\( item.id )": {value: item.value}
+	}
+}
